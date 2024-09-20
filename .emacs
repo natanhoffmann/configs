@@ -119,4 +119,11 @@
 ;; Add lisp directory to load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+;; Load cmake-mode
+(require 'cmake-mode)
+
+;; Automatically enable CMake mode for CMake-related files
+(add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-mode))
+(add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
+
 (setq debug-on-error t)
