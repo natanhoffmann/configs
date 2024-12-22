@@ -1,12 +1,14 @@
 ;;=======================================================================
-;; Package Management: package.el & straight.el
+;; 1. Package Management: package.el & straight.el
 ;;=======================================================================
-;; Initialize package.el and add MELPA, GNU, and Org repositories
 (require 'package)
+
+;; Initialize package archives
 (setq package-archives
       '(("melpa" . "https://melpa.org/packages/")
         ("gnu" . "https://elpa.gnu.org/packages/")
         ("org" . "https://orgmode.org/elpa/")))
+
 (package-initialize)
 
 ;; Bootstrap straight.el for package management
@@ -27,8 +29,9 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
+
 ;;=======================================================================
-;; Visual Enhancements & UI Configuration
+;; 2. User Interface & Visual Enhancements
 ;;=======================================================================
 ;; Set default theme
 (load-theme 'manoj-dark t)
@@ -39,7 +42,7 @@
  column-number-mode t
  size-indication-mode t)
 
-;; Set mode line format, including percentage position
+;; Mode line customizations
 (defun my/update-percent-position ()
   "Update the percentage position in the mode line."
   (let ((size (float (buffer-size)))
@@ -64,14 +67,15 @@
                 mode-line-misc-info
                 mode-line-end-spaces))
 
+
 ;;=======================================================================
-;; Editing Behavior & Keybindings
+;; 3. Core Functionality
 ;;=======================================================================
-;; Bind Home and End keys to move to the beginning and end of lines
+;; Keybindings
 (global-set-key (kbd "<home>") 'move-beginning-of-line)
 (global-set-key (kbd "<end>") 'move-end-of-line)
 
-;; Function and keybinding for matching parentheses
+;; Matching parentheses function and keybinding
 (defun match-paren (arg)
   "Go to the matching paren if on a paren; otherwise insert %."
   (interactive "p")
@@ -81,9 +85,9 @@
 
 (global-set-key "%" 'match-paren)
 
-;; Custom function to split buffer into two files and keybinding
+;; Custom buffer split function and keybinding
 (defun my/two-file-split-buffer ()
-  "Custom function to split the current buffer into two windows with different buffers."
+  "Split the current buffer into two windows with different buffers."
   (interactive)
   (split-window-below)
   (call-interactively 'transpose-frame)
@@ -95,52 +99,78 @@
 
 (global-set-key (kbd "C-c m") 'my/two-file-split-buffer)
 
-;;=======================================================================
-;; Backup & Auto-Save Configuration
-;;=======================================================================
-;; Store backups and auto-save files in temporary directory
-(setq backup-directory-alist `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+;; Enable EditorConfig mode for consistency across projects
+(editorconfig-mode 1)
+
 
 ;;=======================================================================
-;; Package-Specific Configurations
+;; 4. Language-Specific Configuration
 ;;=======================================================================
-;; Use Which Key Mode for better discoverability of keybindings
+;; C/C++ Indentation Preferences
+(defun my-c-cpp-style ()
+  "Set indentation preferences for C/C++ style files."
+  (setq indent-tabs-mode nil)    ;; Use spaces instead of tabs
+  (setq tab-width 4)             ;; Set tab width to 4 spaces
+  (setq c-basic-offset 4))       ;; Set C/C++ indentation to 4 spaces
+
+(add-hook 'c-mode-hook 'my-c-cpp-style)
+(add-hook 'c++-mode-hook 'my-c-cpp-style)
+
+;; Associate `.hpp` and `.h` with C++ mode
+(add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+
+;; Formatters for Different Modes
+(setq format-all-formatters
+      '((c-mode . "clang-format")
+        (c++-mode . "clang-format")
+        (python-mode . "black")
+        (fortran-mode . "fprettify")
+        (sh-mode . "shfmt")))
+
+(defun my/indent-and-format ()
+  "Indent the current line and then format the buffer."
+  (interactive)
+  (indent-for-tab-command)  ;; Perform the default TAB action (indentation)
+  (format-all-buffer))      ;; Then format the buffer
+
+(global-set-key (kbd "TAB") 'my/indent-and-format)
+
+
+;;=======================================================================
+;; 5. External Tools & Integrations
+;;=======================================================================
+;; Use Which Key for discoverable keybindings
 (use-package which-key
   :ensure t
   :config
   (which-key-mode))
 
-;; Centered Cursor Mode for programming, text, and org modes
-(unless (boundp 'mouse-wheel-up-event)
-  (defvar mouse-wheel-up-event 'mouse-4))
-(unless (boundp 'mouse-wheel-down-event)
-  (defvar mouse-wheel-down-event 'mouse-5))
-
+;; Enable Centered Cursor Mode for programming and text modes
 (require 'centered-cursor-mode)
 (add-hook 'prog-mode-hook 'centered-cursor-mode)
 (add-hook 'text-mode-hook 'centered-cursor-mode)
 (add-hook 'org-mode-hook 'centered-cursor-mode)
 
-;; ;; Load cmake-mode
-;; (require 'cmake-mode)
+;; Load cmake-mode and automatically associate CMake files
+(require 'cmake-mode)
+(add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-mode))
+(add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
 
-;; ;; Automatically enable CMake mode for CMake-related files
-;; (add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-mode))
-;; (add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
-
-;;=======================================================================
-;; Miscellaneous Settings
-;;=======================================================================
-;; Recognize .bashrc and similar files as Bash configuration files
-(add-to-list 'auto-mode-alist '("\\.bashrc\\'" . shell-script-mode))
-(add-to-list 'auto-mode-alist '("\\.bashrc.natanh\\'" . shell-script-mode))
-
-;; Add shfmt to the exec-path
+;; Add `shfmt` to exec-path
 (add-to-list 'exec-path "/home/natanh/misc/.local/opt/shfmt-v3.7.0/bin/shfmt")
 
+
+;;=======================================================================
+;; 6. Miscellaneous Settings
+;;=======================================================================
 ;; Add lisp directory to load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+;; Store backups and auto-save files in temporary directory
+(setq backup-directory-alist `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+
 ;; Enable debugging on error
 (setq debug-on-error t)
+
