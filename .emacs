@@ -1,14 +1,12 @@
 ;;=======================================================================
-;; 1. Package Management: package.el & straight.el
+;; Package Management: package.el & straight.el
 ;;=======================================================================
+;; Initialize package.el and add MELPA, GNU, and Org repositories
 (require 'package)
-
-;; Initialize package archives
 (setq package-archives
       '(("melpa" . "https://melpa.org/packages/")
         ("gnu" . "https://elpa.gnu.org/packages/")
         ("org" . "https://orgmode.org/elpa/")))
-
 (package-initialize)
 
 ;; Bootstrap straight.el for package management
@@ -29,9 +27,8 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-
 ;;=======================================================================
-;; 2. User Interface & Visual Enhancements
+;; Visual Enhancements & UI Configuration
 ;;=======================================================================
 ;; Set default theme
 (load-theme 'manoj-dark t)
@@ -42,7 +39,7 @@
  column-number-mode t
  size-indication-mode t)
 
-;; Mode line customizations
+;; Set mode line format, including percentage position
 (defun my/update-percent-position ()
   "Update the percentage position in the mode line."
   (let ((size (float (buffer-size)))
@@ -67,15 +64,14 @@
                 mode-line-misc-info
                 mode-line-end-spaces))
 
-
 ;;=======================================================================
-;; 3. Core Functionality
+;; Editing Behavior & Keybindings
 ;;=======================================================================
-;; Keybindings
+;; Bind Home and End keys to move to the beginning and end of lines
 (global-set-key (kbd "<home>") 'move-beginning-of-line)
 (global-set-key (kbd "<end>") 'move-end-of-line)
 
-;; Matching parentheses function and keybinding
+;; Function and keybinding for matching parentheses
 (defun match-paren (arg)
   "Go to the matching paren if on a paren; otherwise insert %."
   (interactive "p")
@@ -85,9 +81,9 @@
 
 (global-set-key "%" 'match-paren)
 
-;; Custom buffer split function and keybinding
+;; Custom function to split buffer into two files and keybinding
 (defun my/two-file-split-buffer ()
-  "Split the current buffer into two windows with different buffers."
+  "Custom function to split the current buffer into two windows with different buffers."
   (interactive)
   (split-window-below)
   (call-interactively 'transpose-frame)
@@ -99,78 +95,95 @@
 
 (global-set-key (kbd "C-c m") 'my/two-file-split-buffer)
 
-;; Enable EditorConfig mode for consistency across projects
 (editorconfig-mode 1)
 
+;;=======================================================================
+;; Backup & Auto-Save Configuration
+;;=======================================================================
+;; Store backups and auto-save files in temporary directory
+(setq backup-directory-alist `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
 ;;=======================================================================
-;; 4. Language-Specific Configuration
+;; Package-Specific Configurations
 ;;=======================================================================
-;; C/C++ Indentation Preferences
-(defun my-c-cpp-style ()
-  "Set indentation preferences for C/C++ style files."
-  (setq indent-tabs-mode nil)    ;; Use spaces instead of tabs
-  (setq tab-width 4)             ;; Set tab width to 4 spaces
-  (setq c-basic-offset 4))       ;; Set C/C++ indentation to 4 spaces
-
-(add-hook 'c-mode-hook 'my-c-cpp-style)
-(add-hook 'c++-mode-hook 'my-c-cpp-style)
-
-;; Associate `.hpp` and `.h` with C++ mode
-(add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-
-;; Formatters for Different Modes
-(setq format-all-formatters
-      '((c-mode . "clang-format")
-        (c++-mode . "clang-format")
-        (python-mode . "black")
-        (fortran-mode . "fprettify")
-        (sh-mode . "shfmt")))
-
-(defun my/indent-and-format ()
-  "Indent the current line and then format the buffer."
-  (interactive)
-  (indent-for-tab-command)  ;; Perform the default TAB action (indentation)
-  (format-all-buffer))      ;; Then format the buffer
-
-(global-set-key (kbd "TAB") 'my/indent-and-format)
-
-
-;;=======================================================================
-;; 5. External Tools & Integrations
-;;=======================================================================
-;; Use Which Key for discoverable keybindings
+;; Use Which Key Mode for better discoverability of keybindings
 (use-package which-key
   :ensure t
   :config
   (which-key-mode))
 
-;; Enable Centered Cursor Mode for programming and text modes
+;; Centered Cursor Mode for programming, text, and org modes
+(unless (boundp 'mouse-wheel-up-event)
+  (defvar mouse-wheel-up-event 'mouse-4))
+(unless (boundp 'mouse-wheel-down-event)
+  (defvar mouse-wheel-down-event 'mouse-5))
+
 (require 'centered-cursor-mode)
 (add-hook 'prog-mode-hook 'centered-cursor-mode)
 (add-hook 'text-mode-hook 'centered-cursor-mode)
 (add-hook 'org-mode-hook 'centered-cursor-mode)
 
-;; Load cmake-mode and automatically associate CMake files
-(require 'cmake-mode)
-(add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-mode))
-(add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
+;; ;; Load cmake-mode
+;; (require 'cmake-mode)
 
-;; Add `shfmt` to exec-path
-(add-to-list 'exec-path "/home/natanh/misc/.local/opt/shfmt-v3.7.0/bin/shfmt")
-
+;; ;; Automatically enable CMake mode for CMake-related files
+;; (add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-mode))
+;; (add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
 
 ;;=======================================================================
-;; 6. Miscellaneous Settings
+;; Correct indentation for C and C++ files and format with clang-format
 ;;=======================================================================
+(defun my-c-cpp-style ()
+  "Set indentation preferences for C/C++ files and format on tab."
+  (setq indent-tabs-mode nil)    ;; Use spaces instead of tabs
+  (setq tab-width 4)             ;; Set tab width to 4 spaces
+  (setq c-basic-offset 4)        ;; Set C/C++ indentation to 4 spaces
+  (local-set-key (kbd "TAB")
+                 (lambda ()
+                   (interactive)
+                   (indent-for-tab-command)
+                   (clang-format-buffer)))) ;; Perform clang-format after tab
+
+;; Apply this style to C, C++, and header files
+(add-hook 'c-mode-hook 'my-c-cpp-style)
+(add-hook 'c++-mode-hook 'my-c-cpp-style)
+
+;;=======================================================================
+;; shfmt stuff
+;;=======================================================================
+(setq shfmt-arguments '("-i" "4" "-ci"))
+
+;; ;;=======================================================================
+;; ;; yasnippet stuff
+;; ;;=======================================================================
+;; (add-to-list 'load-path
+;;              "home/hoffmann/.emacs.d/snippets")
+;; (require 'yasnippet)
+;; (yas-global-mode 1)
+
+;;=======================================================================
+;; tabs stuff
+;;=======================================================================
+(tab-bar-mode 1)
+(setq tab-bar-show t) ;; always show the tab-bar
+(global-set-key (kbd "M-n") 'tab-bar-new-tab)
+(global-set-key (kbd "M-<left>") 'tab-bar-switch-to-prev-tab)
+(global-set-key (kbd "M-<right>") 'tab-bar-switch-to-next-tab)
+(dotimes (i 9)
+  (let ((n (number-to-string (1+ i))))
+    (global-set-key (kbd (concat "M-" n))
+                    `(lambda () (interactive) (tab-bar-select-tab ,(1+ i))))))
+
+;;=======================================================================
+;; Miscellaneous Settings
+;;=======================================================================
+;; Recognize .bashrc and similar files as Bash configuration files
+(add-to-list 'auto-mode-alist '("\\.bashrc\\'" . shell-script-mode))
+(add-to-list 'auto-mode-alist '("\\.bashrc.natanh\\'" . shell-script-mode))
+
 ;; Add lisp directory to load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
-;; Store backups and auto-save files in temporary directory
-(setq backup-directory-alist `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
-
 ;; Enable debugging on error
 (setq debug-on-error t)
-
